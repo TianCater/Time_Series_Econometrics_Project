@@ -166,7 +166,7 @@ D_inflation_tr <- diff(inflation_tr)
 4. Impose the number of cointegrating relationships $r$ and execute normalization as necessary.
 5. Estimate the resulting (reduced-rank) cointegrated VECM, interpret the economic dynamics of the model, and test further hypothesized restrictions.
 
-## Step 1: Select the specification of the deterministic component.
+## 1. Select the specification of the deterministic component.
 
 ```{r,echo = FALSE}
 
@@ -183,9 +183,9 @@ gggg <- df1_tidy |> ggplot() +
 
 ```
 
-## Pre-test the variables to conclude that they are (or may be) $I(1)$
+## 2. Pre-test the variables to conclude that they are (or may be) $I(1)$
 
-### Augmented Dickey-Fuller (ADF) test for unit roots
+### 2.1.Augmented Dickey-Fuller (ADF) test for unit roots
 
 ```{r,echo = FALSE}
 
@@ -199,7 +199,7 @@ adf_monetaryaggregate_tr  <- ur.df(monetaryaggregate_tr, type = "trend", selectl
 
 ```
 
-### Augmented Dickey-Fuller (ADF) test for order of integration
+### 2.2.Augmented Dickey-Fuller (ADF) test for order of integration
 
 ```{r,echo = FALSE}
 
@@ -222,7 +222,7 @@ D_adf_inflation_tr <- ur.df(D_inflation_tr,selectlags = c("AIC")) #reject the nu
 
 ```
 
-## Estimate the unrestricted VAR in levels and check the adequacy of the model specification.
+## 3. Estimate the unrestricted VAR in levels and check the adequacy of the model specification.
 
 
 ```{r, echo = FALSE}
@@ -235,7 +235,7 @@ VAR2 <- cbind(realGDP_tr, oilprice_tr, interestrate_tr, inflation_tr,exchangerat
 #In a similar order to the cointegration analysis of the restricted system
 ```
 
-### Determine the order of lag
+### 3.1.Determine the order of lag
 
 ```{r,echo = FALSE}
 infocrit <- VARselect(VAR2, lag.max = 4, type = "trend") ##Similar results as in the paper. Lag length of 2
@@ -243,7 +243,7 @@ infocrit <- VARselect(VAR2, lag.max = 4, type = "trend") ##Similar results as in
 ```
 
 
-### Check the model specification adequacy of the estimated unrestricted VAR in levels
+### 3.2.Check the model specification adequacy of the estimated unrestricted VAR in levels
 
 A critical point is to test that errors are white noise. The Johansen Method is a ML method, i.e. limiting distributions are derived assuming normal errors:
    1.Robust to some deviations: some non-normality, heteroscedasticity
@@ -289,9 +289,9 @@ fluctuation_test <- stability(VAR_unrestricted,type = "fluctuation") ## Test for
 
 
 
-## Impose the number of cointegrating relationships $r$ and execute normalization as necessary.
+## 4.Impose the number of cointegrating relationships $r$ and execute normalization as necessary.
 
-### Determine the number of cointegrating relationships
+### 4.1. Determine the number of cointegrating relationships
 
 ```{r,echo = FALSE}
 Johansen_trace <- ca.jo(VAR2, type="trace", K=2, ecdet=c("trend"), spec="longrun")
@@ -306,7 +306,7 @@ summary(Johansen_eig)
 
 ```
 
-### Esitmate the cointegrating relationships
+### 4.2. Esitmate the cointegrating relationships
 
 
 ```{r,echo = FALSE}
@@ -320,7 +320,7 @@ summary(VECModelNew)
 
 ```
 
-### Construct the (6x6) long-run impact matrix $\Pi$ and specify the restricted B matrix
+### 4.3. Construct the (6x6) long-run impact matrix $\Pi$ and specify the restricted B matrix
 
 
 

@@ -17,19 +17,19 @@ pacman::p_load(fredr, tidyverse, lubridate, tsibble, dplyr, tseries, grid,gridEx
     the economic dynamics of the model, and test further hypothesized
     restrictions.
 
-## Step 1: Select the specification of the deterministic component.
+## 1. Select the specification of the deterministic component.
 
-## Pre-test the variables to conclude that they are (or may be) *I*(1)
+## 2. Pre-test the variables to conclude that they are (or may be) *I*(1)
 
-### Augmented Dickey-Fuller (ADF) test for unit roots
+### 2.1.Augmented Dickey-Fuller (ADF) test for unit roots
 
-### Augmented Dickey-Fuller (ADF) test for order of integration
+### 2.2.Augmented Dickey-Fuller (ADF) test for order of integration
 
-## Estimate the unrestricted VAR in levels and check the adequacy of the model specification.
+## 3. Estimate the unrestricted VAR in levels and check the adequacy of the model specification.
 
-### Determine the order of lag
+### 3.1.Determine the order of lag
 
-### Check the model specification adequacy of the estimated unrestricted VAR in levels
+### 3.2.Check the model specification adequacy of the estimated unrestricted VAR in levels
 
 A critical point is to test that errors are white noise. The Johansen
 Method is a ML method, i.e. limiting distributions are derived assuming
@@ -38,9 +38,9 @@ heteroscedasticity 2.Requires: i.i.d. errors with finite variance
 3.Hence the following is unacceptable: autocorrelated residuals,
 time-varying parameters, structural breaks
 
-## Impose the number of cointegrating relationships *r* and execute normalization as necessary.
+## 4.Impose the number of cointegrating relationships *r* and execute normalization as necessary.
 
-### Determine the number of cointegrating relationships
+### 4.1. Determine the number of cointegrating relationships
 
     ## 
     ## ###################### 
@@ -116,7 +116,7 @@ time-varying parameters, structural breaks
     ## exchangerate_tr.d                            0.032539549  6.225732e-13
     ## real_monetaryaggregate_tr.d                  0.029081460 -4.701294e-14
 
-### Esitmate the cointegrating relationships
+### 4.2. Esitmate the cointegrating relationships
 
     ## #############
     ## ###Model VECM 
@@ -197,7 +197,7 @@ time-varying parameters, structural breaks
     ## Equation exchangerate_tr           -0.2954(0.3973)             
     ## Equation real_monetaryaggregate_tr 0.0375(0.1092)
 
-### Construct the (6x6) long-run impact matrix *Π* and specify the restricted B matrix
+### 4.3. Construct the (6x6) long-run impact matrix *Π* and specify the restricted B matrix
 
     ##             [,1]         [,2]        [,3]         [,4]          [,5]
     ## [1,] -0.04410625 -0.000462459 0.000000000  0.008050753  0.0000000000
