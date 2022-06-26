@@ -245,10 +245,16 @@ infocrit <- VARselect(VAR2, lag.max = 4, type = "trend") ##Similar results as in
 
 ### Check the model specification adequacy of the estimated unrestricted VAR in levels
 
+A critical point is to test that errors are white noise. The Johansen Method is a ML method, i.e. limiting distributions are derived assuming normal errors:
+   1.Robust to some deviations: some non-normality, heteroscedasticity
+   2.Requires: i.i.d. errors with finite variance
+   3.Hence the following is unacceptable: autocorrelated residuals, time-varying parameters, structural breaks
+
+
 ```{r}
 VAR_unrestricted <- VAR(VAR2, p = 2, type = "trend")
 
-roots_stability <- roots(VAR_unrestricted)
+roots_stability <- roots(VAR_unrestricted) ##Shows eigenvalues corresponding to stability
 
 ```
 
@@ -269,12 +275,12 @@ roots_stability <- roots(VAR_unrestricted)
  
  #plot(varUR.serial)
 
-reccusum_test <- stability(VAR_unrestricted,type = "Rec-CUSUM")
+reccusum_test <- stability(VAR_unrestricted,type = "Rec-CUSUM") #In time series analysis, the CUSUM statistics use the sequence of residual deviations from a model to indicate whether the autoregressive model is misspecified.
 
  #plot(reccusum_test)
 
 
-fluctuation_test <- stability(VAR_unrestricted,type = "fluctuation")
+fluctuation_test <- stability(VAR_unrestricted,type = "fluctuation") ## Test for unstable parameter fluctuations. Both these
 
  #plot(fluctuation_test)
 
@@ -294,48 +300,101 @@ Johansen_trace <- ca.jo(VAR2, type="trace", K=2, ecdet=c("trend"), spec="longrun
 
 Johansen_eig<- ca.jo(VAR2, type="eigen", K=2, ecdet=c("trend"), spec="longrun")
 
-# test stat > CV for r=0 and r <=1. At there r's, we reject null of no coint rel
+# test stat > CV for r=0 and r <=1. Hence, indicative of 2 cointegrating relationships. Not the same as determined by @cologni2008
 
 summary(Johansen_eig)
 
 ```
 
-
-
-
-```{r}
-
-
-
-VECM_levels <- vec2var(Johansen_eig, r=1)
-
-VECM <- cajorls(Johansen_eig, r = 1)
-
-VECM_levels
-
-```
-
+### Esitmate the cointegrating relationships
 
 
 ```{r}
- vecm.fevd <- fevd(VECM_levels) #forecast error variance decomposition
- vecm.norm <- normality.test(VECM_levels)
- vecm.arch <- arch.test(VECM_levels)
- vecm.serial <- serial.test(VECM_levels)
- 
-```
+VECModelNew <- VECM(VAR2,lag=2,r=2, estim="ML", include=c("none"),LRinclude =c("both") )
 
 
-
-
-```{r}
-VECModelNew <- VECM(VAR2,lag=2, r=2, estim="ML")
-
-VARModelNew <- VAR(VAR2, p=2, type = "trend", lag.max = 4)
 
 summary(VECModelNew)
 
+
+
 ```
+
+### Construct the (6x6) long-run impact matrix $\Pi$ and specify the restricted B matrix
+
+
+
+```{r}
+
+Johansen_trace_2 <- ca.jo(VAR1, type="trace", K=2, ecdet=c("trend"), spec="longrun")
+Johansen_eig_2<- ca.jo(VAR1, type="eigen", K=2, ecdet =c("trend"), spec="longrun")
+
+beta_transpose <- Johansen_eig_2@V #cointegrating vectors
+alpha <- Johansen_eig_2@W #cointegrating loadingcoeffs
+
+#Purge the time trend and labels to form a (6X6) matrix
+beta_transpose1 <- beta_transpose[-7,-7]
+alpha1 <- alpha[-7,-7]
+
+colnames(beta_transpose1)<-NULL
+rownames(beta_transpose1) <- NULL
+
+colnames(alpha1)<-NULL
+rownames(alpha1) <- NULL
+
+# The matrix of interest is (Pi) = alpha * beta'
+
+Pi <- t(beta_transpose1)*alpha1
+
+# Construct B matrix to impose the set of over-identifying restrictions on its coefficients as done by @Cologni2008
+
+Br1 <- c(1,1,0,1,0,0)
+Br2 <- c(0,1,1,1,1,1)
+Br3 <- c(0,0,1,1,1,1)   # order:m, r, y, p, e, o
+Br4 <- c(0,0,0,1,1,1)
+Br5 <- c(0,0,0,0,1,1)
+Br6 <- c(0,0,0,0,0,1)
+
+
+
+B <- rbind(Br1, Br2, Br3, Br4, Br5, Br6)
+
+colnames(B)<-NULL
+rownames(B) <- NULL
+
+#In order to identify the covariance matrix, I impose the restricted B matrix onto long-run impact matrix $\Pi$ 
+
+Sigma_u_matrix <- Pi*B
+Sigma_u_matrix
+
+
+```
+
+```{r, echo = FALSE}
+coeffs <- summary(VECModelNew)$coefMat
+
+ect_coeffs <- coeffs[grep("ECT", rownames(coeffs)),]
+
+#now we have a matrix of all of the ECT and variables
+```
+```{r, echo = FALSE}
+#need covariance of ecm terms in matrix 
+cov(ect_coeffs)
+```
+
+
+```{r}
+
+
+
+
+
+
+blrtest(z =Johansen_eig_2 , H = , r = 2)
+
+
+```
+
 
 
 
@@ -350,19 +409,21 @@ covariancematrix <- summary(VARModelRestricted)$covres
 
 
 ```{r, echo = FALSE}
-Brow1 <- c(1,1,0,1,0,0)
-Brow2 <- c(0,1,1,1,1,1)
-Brow3 <- c(0,0,1,1,1,1)
-Brow4 <- c(0,0,0,1,1,1)
-Brow5 <- c(0,0,0,0,1,1)
-Brow6 <- c(0,0,0,0,0,1)
-#m, r, y, p, e, o
+
+```
 
 
-B_Matrix <- rbind(Brow1, Brow2, Brow3, Brow4, Brow5, Brow6)
 
-colnames(B_Matrix)<-NULL
-rownames(B_Matrix) <- NULL
+```{r}
+
+
+
+VECM_levels <- vec2var(Johansen_eig, r=1)
+
+VECM <- cajorls(Johansen_eig, r = 1)
+
+VECM_levels
+
 ```
 
 
