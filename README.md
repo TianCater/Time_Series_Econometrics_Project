@@ -29,7 +29,11 @@ gggg <- df1_tidy |> ggplot() +
     y = "Prices", title = "TRI of Brics Countries", subtitle = "Total Return Index using net dividends reinvested", 
     caption = "Note:\nBloomberg data used") +
     facet_wrap(~Variable, scales = "free_y") 
+    
+gggg
 ```
+
+![](README_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
 ## 2. Pre-test the variables to conclude that they are (or may be) *I*(1)
 
@@ -114,13 +118,18 @@ roots_stability <- roots(VAR_unrestricted) ##Shows eigenvalues corresponding to 
 
 reccusum_test <- stability(VAR_unrestricted,type = "Rec-CUSUM") #In time series analysis, the CUSUM statistics use the sequence of residual deviations from a model to indicate whether the autoregressive model is misspecified.
 
- #plot(reccusum_test)
+ plot(reccusum_test)
+```
 
+![](README_files/figure-markdown_github/unnamed-chunk-17-1.png)
 
+``` r
 fluctuation_test <- stability(VAR_unrestricted,type = "fluctuation") ## Test for unstable parameter fluctuations. Both these
 
- #plot(fluctuation_test)
+ plot(fluctuation_test)
 ```
+
+![](README_files/figure-markdown_github/unnamed-chunk-17-2.png)
 
 ## 4.Impose the number of cointegrating relationships *r* and execute normalization as necessary.
 

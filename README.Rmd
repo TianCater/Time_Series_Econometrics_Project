@@ -180,6 +180,7 @@ gggg <- df1_tidy |> ggplot() +
     caption = "Note:\nBloomberg data used") +
     facet_wrap(~Variable, scales = "free_y") 
     
+gggg
 
 ```
 
@@ -277,12 +278,12 @@ roots_stability <- roots(VAR_unrestricted) ##Shows eigenvalues corresponding to 
 
 reccusum_test <- stability(VAR_unrestricted,type = "Rec-CUSUM") #In time series analysis, the CUSUM statistics use the sequence of residual deviations from a model to indicate whether the autoregressive model is misspecified.
 
- #plot(reccusum_test)
+ plot(reccusum_test)
 
 
 fluctuation_test <- stability(VAR_unrestricted,type = "fluctuation") ## Test for unstable parameter fluctuations. Both these
 
- #plot(fluctuation_test)
+ plot(fluctuation_test)
 
 
 ```
