@@ -168,7 +168,7 @@ D_inflation_tr <- diff(inflation_tr)
 
 ## 1. Select the specification of the deterministic component.
 
-```{r,echo = FALSE}
+```{r}
 
 df1_tidy <- df1 |> dplyr::select(date,FFR, lCPI, lGDP, lM1, lExchange, lOil, infl, realM1) |> pivot_longer(cols = c(FFR, lCPI, lGDP, lM1, lExchange, lOil, infl,realM1), names_to = "Variable", values_to = "Value") |> arrange(date)
 
@@ -187,7 +187,7 @@ gggg <- df1_tidy |> ggplot() +
 
 ### 2.1.Augmented Dickey-Fuller (ADF) test for unit roots
 
-```{r,echo = FALSE}
+```{r}
 
 adf_interestrate_tr <- ur.df(interestrate_tr, type = "trend", selectlags = c("AIC")) #fail to reject null of no unit root
 adf_price_tr <- ur.df(price_tr, type = "trend", selectlags = c("AIC")) #fail to reject null of no unit root
@@ -201,7 +201,7 @@ adf_monetaryaggregate_tr  <- ur.df(monetaryaggregate_tr, type = "trend", selectl
 
 ### 2.2.Augmented Dickey-Fuller (ADF) test for order of integration
 
-```{r,echo = FALSE}
+```{r}
 
 adf_D_interestrate_tr <- ur.df(D_interestrate_tr, selectlags = c("AIC")) #I(1)
 adf_D_price_tr <- ur.df(D_price_tr, selectlags = c("AIC")) #fail to reject null of no unit root only at the 1% sign level #I(2)
@@ -225,7 +225,7 @@ D_adf_inflation_tr <- ur.df(D_inflation_tr,selectlags = c("AIC")) #reject the nu
 ## 3. Estimate the unrestricted VAR in levels and check the adequacy of the model specification.
 
 
-```{r, echo = FALSE}
+```{r}
 VAR1 <- cbind(real_monetaryaggregate_tr, interestrate_tr, realGDP_tr, inflation_tr, exchangerate_tr, oilprice_tr)
 colnames(VAR1) <- cbind("RealMonetaryAggregate", "InterestRate", "RealGDP", "Inflation", "ExchangeRate", "OilPrice")
 #In the same order as the A matrix
@@ -237,7 +237,7 @@ VAR2 <- cbind(realGDP_tr, oilprice_tr, interestrate_tr, inflation_tr,exchangerat
 
 ### 3.1.Determine the order of lag
 
-```{r,echo = FALSE}
+```{r}
 infocrit <- VARselect(VAR2, lag.max = 4, type = "trend") ##Similar results as in the paper. Lag length of 2
 
 ```
@@ -251,7 +251,7 @@ A critical point is to test that errors are white noise. The Johansen Method is 
    3.Hence the following is unacceptable: autocorrelated residuals, time-varying parameters, structural breaks
 
 
-```{r,echo = FALSE}
+```{r}
 VAR_unrestricted <- VAR(VAR2, p = 2, type = "trend")
 
 roots_stability <- roots(VAR_unrestricted) ##Shows eigenvalues corresponding to stability
@@ -260,7 +260,7 @@ roots_stability <- roots(VAR_unrestricted) ##Shows eigenvalues corresponding to 
 
 
 
-```{r, warning=FALSE,echo = FALSE}
+```{r, warning=FALSE}
 
  varUR.serial <- serial.test(VAR_unrestricted, lags.pt = 17) ## Fail to reject null of multivariate serial correlation
 
@@ -293,7 +293,7 @@ fluctuation_test <- stability(VAR_unrestricted,type = "fluctuation") ## Test for
 
 ### 4.1. Determine the number of cointegrating relationships
 
-```{r,echo = FALSE}
+```{r}
 Johansen_trace <- ca.jo(VAR2, type="trace", K=2, ecdet=c("trend"), spec="longrun")
 
 # test stat < CV where r <=2 : reject null of no cointegrating relationships
@@ -309,7 +309,7 @@ summary(Johansen_eig)
 ### 4.2. Esitmate the cointegrating relationships
 
 
-```{r,echo = FALSE}
+```{r}
 VECModelNew <- VECM(VAR2,lag=2,r=2, estim="ML", include=c("none"),LRinclude =c("both") )
 
 
@@ -324,7 +324,7 @@ summary(VECModelNew)
 
 
 
-```{r,echo = FALSE}
+```{r}
 
 Johansen_trace_2 <- ca.jo(VAR1, type="trace", K=2, ecdet=c("trend"), spec="longrun")
 Johansen_eig_2<- ca.jo(VAR1, type="eigen", K=2, ecdet =c("trend"), spec="longrun")
@@ -370,7 +370,7 @@ Sigma_u_matrix
 
 ```
 
-```{r, echo = FALSE}
+```{r,}
 coeffs <- summary(VECModelNew)$coefMat
 
 ect_coeffs <- coeffs[grep("ECT", rownames(coeffs)),]
@@ -383,7 +383,7 @@ cov(ect_coeffs)
 ```
 
 
-```{r,echo = FALSE}
+```{r}
 
 #blrtest(z =Johansen_eig_2 , H = , r = 2)
 
@@ -393,7 +393,7 @@ cov(ect_coeffs)
 
 
 
-```{r, echo = FALSE}
+```{r}
 VARModelRestricted <- VAR(VAR1, p=2, type = "trend", lag.max = 4)
 
 covariancematrix <- summary(VARModelRestricted)$covres
@@ -404,7 +404,7 @@ covariancematrix <- summary(VARModelRestricted)$covres
 
 
 
-```{r, echo = FALSE}
+```{r}
 
 
 
@@ -432,7 +432,7 @@ VECM <- cajorls(Johansen_eig, r = 1)
 
 
 
-```{r, echo = FALSE}
+```{r}
 #covariancematrix*B_Matrix*t(B_Matrix)
 ```
 
@@ -446,7 +446,7 @@ ErrorVector_U <- c(0.0001328802, 0.07138726, 2.804883e-05, 0.753182, 0.01135468,
 
 
 
-```{r, echo = FALSE}
+```{r}
 M_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "real_monetaryaggregate_tr",
              n.ahead = 16, ortho = FALSE, runs = 1000)
 IR_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "interestrate_tr",

@@ -19,15 +19,69 @@ pacman::p_load(fredr, tidyverse, lubridate, tsibble, dplyr, tseries, grid,gridEx
 
 ## 1. Select the specification of the deterministic component.
 
+``` r
+df1_tidy <- df1 |> dplyr::select(date,FFR, lCPI, lGDP, lM1, lExchange, lOil, infl, realM1) |> pivot_longer(cols = c(FFR, lCPI, lGDP, lM1, lExchange, lOil, infl,realM1), names_to = "Variable", values_to = "Value") |> arrange(date)
+
+gggg <- df1_tidy |> ggplot() +
+    geom_line(aes(x = date, y = Value), alpha = 0.8, 
+    size = 0.5) + 
+    theme_bw() + theme(legend.position = "none") + labs(x = "", 
+    y = "Prices", title = "TRI of Brics Countries", subtitle = "Total Return Index using net dividends reinvested", 
+    caption = "Note:\nBloomberg data used") +
+    facet_wrap(~Variable, scales = "free_y") 
+```
+
 ## 2. Pre-test the variables to conclude that they are (or may be) *I*(1)
 
 ### 2.1.Augmented Dickey-Fuller (ADF) test for unit roots
 
+``` r
+adf_interestrate_tr <- ur.df(interestrate_tr, type = "trend", selectlags = c("AIC")) #fail to reject null of no unit root
+adf_price_tr <- ur.df(price_tr, type = "trend", selectlags = c("AIC")) #fail to reject null of no unit root
+adf_realGDP_tr <- ur.df(realGDP_tr, type = "trend", selectlags = c("AIC")) # fail ...
+adf_oilprice_tr <- ur.df(oilprice_tr, type = "trend", selectlags = c("AIC")) #
+adf_interestrate_tr <- ur.df(interestrate_tr, type = "trend", selectlags = c("AIC"))
+adf_monetaryaggregate_tr  <- ur.df(monetaryaggregate_tr, type = "trend", selectlags = c("AIC"))
+```
+
 ### 2.2.Augmented Dickey-Fuller (ADF) test for order of integration
+
+``` r
+adf_D_interestrate_tr <- ur.df(D_interestrate_tr, selectlags = c("AIC")) #I(1)
+adf_D_price_tr <- ur.df(D_price_tr, selectlags = c("AIC")) #fail to reject null of no unit root only at the 1% sign level #I(2)
+adf_D_realGDP_trr <- ur.df(D_realGDP_tr, selectlags = c("AIC")) #I(1)
+adf_D_exchangerate_tr <- ur.df(D_exchangerate_tr, selectlags = c("AIC")) #I(1)
+adf_D_oilprice_tr <- ur.df(D_oilprice_tr, selectlags = c("AIC")) #I(1)
+adf_D_monetaryaggregate_tr <- ur.df(D_monetaryaggregate_tr, selectlags = c("AIC")) #fail to reject null of no unit root only at the 1% sign level
+
+## Now lets deal with the problem of the monetary aggregate I(2) be transforming it to the real monetary aggregate (mt - pt) and to inflation (change in price)
+
+adf_real_monetaryaggregate_tr <- ur.df(real_monetaryaggregate_tr, type = "trend", selectlags = c("AIC")) #fail to reject null of no unit root
+
+adf_D_real_montaryaggregate_tr <- ur.df(D_real_monetaryaggregate_tr , selectlags = c("AIC")) #reject the null, Therefore is I(1)
+
+adf_inflation_tr <- ur.df(inflation_tr,selectlags = c("AIC")) #fail to reject the null of no unit root
+
+D_adf_inflation_tr <- ur.df(D_inflation_tr,selectlags = c("AIC")) #reject the null. Thus inflation is I(1)
+```
 
 ## 3. Estimate the unrestricted VAR in levels and check the adequacy of the model specification.
 
+``` r
+VAR1 <- cbind(real_monetaryaggregate_tr, interestrate_tr, realGDP_tr, inflation_tr, exchangerate_tr, oilprice_tr)
+colnames(VAR1) <- cbind("RealMonetaryAggregate", "InterestRate", "RealGDP", "Inflation", "ExchangeRate", "OilPrice")
+#In the same order as the A matrix
+
+
+VAR2 <- cbind(realGDP_tr, oilprice_tr, interestrate_tr, inflation_tr,exchangerate_tr ,real_monetaryaggregate_tr)
+#In a similar order to the cointegration analysis of the restricted system
+```
+
 ### 3.1.Determine the order of lag
+
+``` r
+infocrit <- VARselect(VAR2, lag.max = 4, type = "trend") ##Similar results as in the paper. Lag length of 2
+```
 
 ### 3.2.Check the model specification adequacy of the estimated unrestricted VAR in levels
 
@@ -38,9 +92,51 @@ heteroscedasticity 2.Requires: i.i.d. errors with finite variance
 3.Hence the following is unacceptable: autocorrelated residuals,
 time-varying parameters, structural breaks
 
+``` r
+VAR_unrestricted <- VAR(VAR2, p = 2, type = "trend")
+
+roots_stability <- roots(VAR_unrestricted) ##Shows eigenvalues corresponding to stability
+```
+
+``` r
+ varUR.serial <- serial.test(VAR_unrestricted, lags.pt = 17) ## Fail to reject null of multivariate serial correlation
+
+
+ varUR.serial2 <- serial.test(VAR_unrestricted, type = "BG", lags.bg = 16)  ## Fail to reject null of multivariate serial correlation
+ 
+ 
+ varUR.arch <- arch.test(VAR_unrestricted, lags.multi = 4,multivariate.only = F) ##Evidence of heteroskedasticity. Look individually
+ 
+ varUR.norm <- normality.test(VAR_unrestricted, multivariate.only = F) ## Evidence of non-normal errors. Look individually
+
+ 
+ #plot(varUR.serial)
+
+reccusum_test <- stability(VAR_unrestricted,type = "Rec-CUSUM") #In time series analysis, the CUSUM statistics use the sequence of residual deviations from a model to indicate whether the autoregressive model is misspecified.
+
+ #plot(reccusum_test)
+
+
+fluctuation_test <- stability(VAR_unrestricted,type = "fluctuation") ## Test for unstable parameter fluctuations. Both these
+
+ #plot(fluctuation_test)
+```
+
 ## 4.Impose the number of cointegrating relationships *r* and execute normalization as necessary.
 
 ### 4.1. Determine the number of cointegrating relationships
+
+``` r
+Johansen_trace <- ca.jo(VAR2, type="trace", K=2, ecdet=c("trend"), spec="longrun")
+
+# test stat < CV where r <=2 : reject null of no cointegrating relationships
+
+Johansen_eig<- ca.jo(VAR2, type="eigen", K=2, ecdet=c("trend"), spec="longrun")
+
+# test stat > CV for r=0 and r <=1. Hence, indicative of 2 cointegrating relationships. Not the same as determined by @cologni2008
+
+summary(Johansen_eig)
+```
 
     ## 
     ## ###################### 
@@ -117,6 +213,14 @@ time-varying parameters, structural breaks
     ## real_monetaryaggregate_tr.d                  0.029081460 -4.701294e-14
 
 ### 4.2. Esitmate the cointegrating relationships
+
+``` r
+VECModelNew <- VECM(VAR2,lag=2,r=2, estim="ML", include=c("none"),LRinclude =c("both") )
+
+
+
+summary(VECModelNew)
+```
 
     ## #############
     ## ###Model VECM 
@@ -199,6 +303,49 @@ time-varying parameters, structural breaks
 
 ### 4.3. Construct the (6x6) long-run impact matrix *Π* and specify the restricted B matrix
 
+``` r
+Johansen_trace_2 <- ca.jo(VAR1, type="trace", K=2, ecdet=c("trend"), spec="longrun")
+Johansen_eig_2<- ca.jo(VAR1, type="eigen", K=2, ecdet =c("trend"), spec="longrun")
+
+beta_transpose <- Johansen_eig_2@V #cointegrating vectors
+alpha <- Johansen_eig_2@W #cointegrating loadingcoeffs
+
+#Purge the time trend and labels to form a (6X6) matrix
+beta_transpose1 <- beta_transpose[-7,-7]
+alpha1 <- alpha[-7,-7]
+
+colnames(beta_transpose1)<-NULL
+rownames(beta_transpose1) <- NULL
+
+colnames(alpha1)<-NULL
+rownames(alpha1) <- NULL
+
+# The matrix of interest is (Pi) = alpha * beta'
+
+Pi <- t(beta_transpose1)*alpha1
+
+# Construct B matrix to impose the set of over-identifying restrictions on its coefficients as done by @Cologni2008
+
+Br1 <- c(1,1,0,1,0,0)
+Br2 <- c(0,1,1,1,1,1)
+Br3 <- c(0,0,1,1,1,1)   # order:m, r, y, p, e, o
+Br4 <- c(0,0,0,1,1,1)
+Br5 <- c(0,0,0,0,1,1)
+Br6 <- c(0,0,0,0,0,1)
+
+
+
+B <- rbind(Br1, Br2, Br3, Br4, Br5, Br6)
+
+colnames(B)<-NULL
+rownames(B) <- NULL
+
+#In order to identify the covariance matrix, I impose the restricted B matrix onto long-run impact matrix $\Pi$ 
+
+Sigma_u_matrix <- Pi*B
+Sigma_u_matrix
+```
+
     ##             [,1]         [,2]        [,3]         [,4]          [,5]
     ## [1,] -0.04410625 -0.000462459 0.000000000  0.008050753  0.0000000000
     ## [2,]  0.00000000  0.046860532 0.094125049 54.733081775 -0.0790338175
@@ -214,6 +361,18 @@ time-varying parameters, structural breaks
     ## [5,] -0.0029992261
     ## [6,] -0.0009050643
 
+``` r
+coeffs <- summary(VECModelNew)$coefMat
+
+ect_coeffs <- coeffs[grep("ECT", rownames(coeffs)),]
+
+#now we have a matrix of all of the ECT and variables
+
+
+#need covariance of ecm terms in matrix 
+cov(ect_coeffs)
+```
+
     ##             Estimate  Std. Error   t value    Pr(>|t|)
     ## Estimate    6.931416  1.85974271 3.6866579 -0.17793701
     ## Std. Error  1.859743  0.51607620 1.0251883 -0.03700606
@@ -221,10 +380,30 @@ time-varying parameters, structural breaks
     ## Pr(>|t|)   -0.177937 -0.03700606 0.2026052  0.08479717
 
 ``` r
+#blrtest(z =Johansen_eig_2 , H = , r = 2)
+```
+
+``` r
+VARModelRestricted <- VAR(VAR1, p=2, type = "trend", lag.max = 4)
+
+covariancematrix <- summary(VARModelRestricted)$covres
+```
+
+``` r
+VECM_levels <- vec2var(Johansen_eig, r=1)
+
+VECM <- cajorls(Johansen_eig, r = 1)
+```
+
+``` r
  vecm.fevd <- fevd(VECM_levels) #forecast error variance decomposition
  vecm.norm <- normality.test(VECM_levels)
  vecm.arch <- arch.test(VECM_levels)
  vecm.serial <- serial.test(VECM_levels)
+```
+
+``` r
+#covariancematrix*B_Matrix*t(B_Matrix)
 ```
 
 We then obtain a single entry for each row, which we can create our
@@ -234,4 +413,49 @@ short-run error vector from.
 ErrorVector_U <- c(0.0001328802, 0.07138726, 2.804883e-05, 0.753182, 0.01135468,  0.02108534)
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-28-1.png)![](README_files/figure-markdown_github/unnamed-chunk-28-2.png)![](README_files/figure-markdown_github/unnamed-chunk-28-3.png)![](README_files/figure-markdown_github/unnamed-chunk-28-4.png)![](README_files/figure-markdown_github/unnamed-chunk-28-5.png)
+``` r
+M_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "real_monetaryaggregate_tr",
+             n.ahead = 16, ortho = FALSE, runs = 1000)
+IR_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "interestrate_tr",
+             n.ahead = 16, ortho = FALSE, runs = 1000)
+GDP_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "realGDP_tr",
+             n.ahead = 16, ortho = FALSE, runs = 1000)
+I_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "inflation_tr",
+             n.ahead = 16, ortho = FALSE, runs = 1000)
+ER_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "exchangerate_tr",
+             n.ahead = 16, ortho = FALSE, runs = 1000)
+
+M <- plot(M_IRF)
+```
+
+![](README_files/figure-markdown_github/unnamed-chunk-28-1.png)
+
+``` r
+I <- plot(IR_IRF)
+```
+
+![](README_files/figure-markdown_github/unnamed-chunk-28-2.png)
+
+``` r
+G <- plot(GDP_IRF)
+```
+
+![](README_files/figure-markdown_github/unnamed-chunk-28-3.png)
+
+``` r
+In <- plot (I_IRF)
+```
+
+![](README_files/figure-markdown_github/unnamed-chunk-28-4.png)
+
+``` r
+E <- plot(ER_IRF)
+```
+
+![](README_files/figure-markdown_github/unnamed-chunk-28-5.png)
+
+``` r
+#plotIRFGrid(irf, eb, indexes, type, bands)
+
+#grid.arrange(M, I, G, In, E)
+```
