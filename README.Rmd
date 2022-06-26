@@ -11,52 +11,52 @@ knitr::opts_chunk$set(message=FALSE)
 ```{r}
 
 library(pacman)
-pacman::p_load(fredr, tidyverse, lubridate, tsibble, dplyr, tseries, grid,gridExtra, sparsevar, tsDyn)
+pacman::p_load(fredr, tidyverse, lubridate, tsibble, dplyr, tseries, grid,gridExtra, sparsevar, tsDyn,vars)
 
 
 ```
 
 
 
-```{r}
+```{r,echo = FALSE}
 
 FRED_API_KEY <- fredr_set_key("d3c88549b884b18ff71b2541742bd179")
 
 ```
 
-```{r}
+```{r,echo = FALSE}
 FFR_eff_nsa <- fredr(
   series_id = "BOGZ1FL072052006Q",
   observation_start = as.Date("1980-01-01"),
   observation_end = as.Date("2021-07-01")
-) |> select(date, value) |> rename(FFR = value)
+) |> dplyr::select(date, value) |> rename(FFR = value)
 
 ```
 
-```{r}
+```{r,echo = FALSE}
 
 CPI <- fredr(
   series_id = "CPALTT01USQ661S",
   observation_start = as.Date("1980-01-01"),
   observation_end = as.Date("2021-07-01")
-) |> select(date, value)|> rename(CPI = value)
+) |> dplyr::select(date, value)|> rename(CPI = value)
 
 ```
 
 
-```{r}
+```{r,echo = FALSE}
 
 
 GDP <- fredr(
   series_id = "GDPC1",
   observation_start = as.Date("1980-01-01"),
   observation_end = as.Date("2021-07-01")
-) |> select(date, value)|> rename(GDP = value)
+) |> dplyr::select(date, value)|> rename(GDP = value)
 
 ```
 
 
-```{r}
+```{r,echo = FALSE}
 
 
 
@@ -64,7 +64,7 @@ M1 <- fredr(
   series_id = "M1SL",
   observation_start = as.Date("1980-01-01"),
   observation_end = as.Date("2021-07-01"),
-  frequency = "q") |> select(date, value)|> rename(M1 = value)
+  frequency = "q") |> dplyr::select(date, value)|> rename(M1 = value)
 
 
 
@@ -72,7 +72,7 @@ M1 <- fredr(
 ```
 
 
-```{r}
+```{r,echo = FALSE}
 
 ## NB NB NB Notice the last date, make sure all variables have same nimber of observations
 
@@ -80,20 +80,20 @@ Oil_prices1 <- fredr(
   series_id = "POILBREUSDQ",
   observation_start = as.Date("1990-01-01"),
   observation_end = as.Date("2022-01-01")
-) |> select(date, value)
+) |> dplyr::select(date, value)
 
 Oil_prices2 <- fredr(
   series_id = "OILPRICE",
   observation_start = as.Date("1980-01-01"),
   observation_end = as.Date("1989-11-01"),
   frequency = "q"
-) |> select(date, value)
+) |> dplyr::select(date, value)
 
 Oil_prices <- bind_rows(Oil_prices2, Oil_prices1) |> rename(Oil=value)
 
 ```
 
-```{r}
+```{r,echo = FALSE}
 
 
 
@@ -101,14 +101,14 @@ Exchange_1 <- fredr(
   series_id = "DTWEXAFEGS",
   observation_start = as.Date("2006-01-02"),
   observation_end = as.Date("2021-07-01"),
-  frequency = "q") |> select(date, value)
+  frequency = "q") |> dplyr::select(date, value)
 
 
 Exchange_2 <- fredr(
   series_id = "DTWEXM",
   observation_start = as.Date("1980-01-01"),
   observation_end = as.Date("2005-10-01"),
-  frequency = "q") |> select(date, value)
+  frequency = "q") |> dplyr::select(date, value)
 
 Exchange <- bind_rows(Exchange_1, Exchange_2) |> rename(Exchange = value)
     
@@ -116,9 +116,9 @@ Exchange <- bind_rows(Exchange_1, Exchange_2) |> rename(Exchange = value)
     
 ```
 
-```{r}
+```{r,echo = FALSE}
 
-df <- bind_cols(FFR_eff_nsa, CPI |> select(CPI), GDP|> select(GDP), M1|> select(M1), Exchange|> select(Exchange), Oil_prices|> select(Oil))
+df <- bind_cols(FFR_eff_nsa, CPI |> dplyr::select(CPI), GDP|> dplyr::select(GDP), M1|> dplyr::select(M1), Exchange|> dplyr::select(Exchange), Oil_prices|> dplyr::select(Oil))
 
 df_trimmed <- df |> filter(date <= lubridate::ymd(20031001))
 
@@ -168,7 +168,7 @@ D_inflation_tr <- diff(inflation_tr)
 
 ## Step 1: Select the specification of the deterministic component.
 
-```{r}
+```{r,echo = FALSE}
 
 df1_tidy <- df1 |> dplyr::select(date,FFR, lCPI, lGDP, lM1, lExchange, lOil, infl, realM1) |> pivot_longer(cols = c(FFR, lCPI, lGDP, lM1, lExchange, lOil, infl,realM1), names_to = "Variable", values_to = "Value") |> arrange(date)
 
@@ -187,7 +187,7 @@ gggg <- df1_tidy |> ggplot() +
 
 ### Augmented Dickey-Fuller (ADF) test for unit roots
 
-```{r}
+```{r,echo = FALSE}
 
 adf_interestrate_tr <- ur.df(interestrate_tr, type = "trend", selectlags = c("AIC")) #fail to reject null of no unit root
 adf_price_tr <- ur.df(price_tr, type = "trend", selectlags = c("AIC")) #fail to reject null of no unit root
@@ -201,7 +201,7 @@ adf_monetaryaggregate_tr  <- ur.df(monetaryaggregate_tr, type = "trend", selectl
 
 ### Augmented Dickey-Fuller (ADF) test for order of integration
 
-```{r}
+```{r,echo = FALSE}
 
 adf_D_interestrate_tr <- ur.df(D_interestrate_tr, selectlags = c("AIC")) #I(1)
 adf_D_price_tr <- ur.df(D_price_tr, selectlags = c("AIC")) #fail to reject null of no unit root only at the 1% sign level #I(2)
@@ -237,7 +237,7 @@ VAR2 <- cbind(realGDP_tr, oilprice_tr, interestrate_tr, inflation_tr,exchangerat
 
 ### Determine the order of lag
 
-```{r}
+```{r,echo = FALSE}
 infocrit <- VARselect(VAR2, lag.max = 4, type = "trend") ##Similar results as in the paper. Lag length of 2
 
 ```
@@ -251,7 +251,7 @@ A critical point is to test that errors are white noise. The Johansen Method is 
    3.Hence the following is unacceptable: autocorrelated residuals, time-varying parameters, structural breaks
 
 
-```{r}
+```{r,echo = FALSE}
 VAR_unrestricted <- VAR(VAR2, p = 2, type = "trend")
 
 roots_stability <- roots(VAR_unrestricted) ##Shows eigenvalues corresponding to stability
@@ -260,7 +260,7 @@ roots_stability <- roots(VAR_unrestricted) ##Shows eigenvalues corresponding to 
 
 
 
-```{r, warning=FALSE}
+```{r, warning=FALSE,echo = FALSE}
 
  varUR.serial <- serial.test(VAR_unrestricted, lags.pt = 17) ## Fail to reject null of multivariate serial correlation
 
@@ -293,7 +293,7 @@ fluctuation_test <- stability(VAR_unrestricted,type = "fluctuation") ## Test for
 
 ### Determine the number of cointegrating relationships
 
-```{r}
+```{r,echo = FALSE}
 Johansen_trace <- ca.jo(VAR2, type="trace", K=2, ecdet=c("trend"), spec="longrun")
 
 # test stat < CV where r <=2 : reject null of no cointegrating relationships
@@ -309,7 +309,7 @@ summary(Johansen_eig)
 ### Esitmate the cointegrating relationships
 
 
-```{r}
+```{r,echo = FALSE}
 VECModelNew <- VECM(VAR2,lag=2,r=2, estim="ML", include=c("none"),LRinclude =c("both") )
 
 
@@ -324,7 +324,7 @@ summary(VECModelNew)
 
 
 
-```{r}
+```{r,echo = FALSE}
 
 Johansen_trace_2 <- ca.jo(VAR1, type="trace", K=2, ecdet=c("trend"), spec="longrun")
 Johansen_eig_2<- ca.jo(VAR1, type="eigen", K=2, ecdet =c("trend"), spec="longrun")
@@ -376,21 +376,16 @@ coeffs <- summary(VECModelNew)$coefMat
 ect_coeffs <- coeffs[grep("ECT", rownames(coeffs)),]
 
 #now we have a matrix of all of the ECT and variables
-```
-```{r, echo = FALSE}
+
+
 #need covariance of ecm terms in matrix 
 cov(ect_coeffs)
 ```
 
 
-```{r}
+```{r,echo = FALSE}
 
-
-
-
-
-
-blrtest(z =Johansen_eig_2 , H = , r = 2)
+#blrtest(z =Johansen_eig_2 , H = , r = 2)
 
 
 ```
@@ -408,13 +403,8 @@ covariancematrix <- summary(VARModelRestricted)$covres
 
 
 
+
 ```{r, echo = FALSE}
-
-```
-
-
-
-```{r}
 
 
 
@@ -422,7 +412,7 @@ VECM_levels <- vec2var(Johansen_eig, r=1)
 
 VECM <- cajorls(Johansen_eig, r = 1)
 
-VECM_levels
+
 
 ```
 
@@ -443,7 +433,7 @@ VECM_levels
 
 
 ```{r, echo = FALSE}
-covariancematrix*B_Matrix*t(B_Matrix)
+#covariancematrix*B_Matrix*t(B_Matrix)
 ```
 
 We then obtain a single entry for each row, which we can create our short-run error vector from.
