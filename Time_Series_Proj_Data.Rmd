@@ -1,0 +1,200 @@
+---
+# IMPORTANT: Change settings here, but DO NOT change the spacing.
+# Remove comments and add values where applicable.
+# The descriptions below should be self-explanatory
+
+title: "Helping You Write Academic Papers in R using Texevier"
+#subtitle: "This will appear as Right Header"
+
+documentclass: "elsarticle"
+
+# --------- Thesis title (Optional - set to FALSE by default).
+# You can move the details below around as you please.
+Thesis_FP: FALSE
+# Entry1: "An unbelievable study with a title spanning multiple lines."
+# Entry2: "\\textbf{Nico Katzke}" # textbf for bold
+# Entry3: "A thesis submitted toward the degree of Doctor of Philosophy"
+# Uni_Logo: Tex/Logo.png # Place a logo in the indicated location (from your root, e.g. defaults to ~/Tex/Logo.png) and uncomment this line. Leave uncommented for no image
+# Logo_width: 0.3 # If using a logo - use this to set width (size) of image
+# Entry4: "Under the supervision of: \\vfill Prof. Joe Smith and Dr. Frank Smith"
+# Entry5: "Stellenbosch University"
+# Entry6: April 2020
+# Entry7:
+# Entry8:
+
+# --------- Front Page
+# Comment: ----- Follow this pattern for up to 5 authors
+AddTitle: TRUE # Use FALSE when submitting to peer reviewed platform. This will remove author names.
+Author1: "Nico Katzke^[__Contributions:__  \\newline _The authors would like to thank no institution for money donated to this project. Thank you sincerely._]"  # First Author - note the thanks message displayed as an italic footnote of first page.
+Ref1: "Prescient Securities, Cape Town, South Africa" # First Author's Affiliation
+Email1: "nfkatzke\\@gmail.com" # First Author's Email address
+
+Author2: "John Smith"
+Ref2: "Some other Institution, Cape Town, South Africa"
+Email2: "John\\@gmail.com"
+CommonAffiliation_12: TRUE # If Author 1 and 2 have a common affiliation. Works with _13, _23, etc.
+
+Author3: "John Doe"
+Email3: "Joe\\@gmail.com"
+
+CorrespAuthor_1: TRUE  # If corresponding author is author 3, e.g., use CorrespAuthor_3: TRUE
+
+# Comment out below to remove both. JEL Codes only given if keywords also given.
+keywords: "Multivariate GARCH \\sep Kalman Filter \\sep Copula" # Use \\sep to separate
+JELCodes: "L250 \\sep L100"
+
+# ----- Manage headers and footers:
+#BottomLFooter: $Title$
+#BottomCFooter:
+#TopLHeader: \leftmark # Adds section name at topleft. Remove comment to add it.
+BottomRFooter: "\\footnotesize Page \\thepage" # Add a '#' before this line to remove footer.
+addtoprule: TRUE
+addfootrule: TRUE               # Use if footers added. Add '#' to remove line.
+
+# --------- page margins:
+margin: 2.3 # Sides
+bottom: 2 # bottom
+top: 2.5 # Top
+HardSet_layout: TRUE # Hard-set the spacing of words in your document. This will stop LaTeX squashing text to fit on pages, e.g.
+# This is done by hard-setting the spacing dimensions. Set to FALSE if you want LaTeX to optimize this for your paper.
+
+# --------- Line numbers
+linenumbers: FALSE # Used when submitting to journal
+
+# ---------- References settings:
+# You can download cls format here: https://www.zotero.org/ - simply search for your institution. You can also edit and save cls formats here: https://editor.citationstyles.org/about/
+# Hit download, store it in Tex/ folder, and change reference below - easy.
+bibliography: Tex/ref.bib       # Do not edit: Keep this naming convention and location.
+csl: Tex/harvard-stellenbosch-university.csl # referencing format used.
+# By default, the bibliography only displays the cited references. If you want to change this, you can comment out one of the following:
+#nocite: '@*' # Add all items in bibliography, whether cited or not
+# nocite: |  # add specific references that aren't cited
+#  @grinold2000
+#  @Someoneelse2010
+
+# ---------- General:
+RemovePreprintSubmittedTo: TRUE  # Removes the 'preprint submitted to...' at bottom of titlepage
+Journal: "Journal of Finance"   # Journal that the paper will be submitting to, if RemovePreprintSubmittedTo is set to TRUE.
+toc: FALSE                       # Add a table of contents
+numbersections: TRUE             # Should sections (and thus figures and tables) be numbered?
+fontsize: 11pt                  # Set fontsize
+linestretch: 1.2                # Set distance between lines.
+link-citations: TRUE            # This creates dynamic links to the papers in reference list.
+
+### Adding additional latex packages:
+header-includes:
+    - \usepackage{colortbl}
+    - \usepackage{bm} # Add additional packages here.
+
+output:
+  pdf_document:
+    keep_tex: TRUE
+    template: Tex/TexDefault.txt
+    fig_width: 3.5 # Adjust default figure sizes. This can also be done in the chunks of the text.
+    fig_height: 3.5
+abstract: |
+  Abstract to be written here. The abstract should not be too long and should provide the reader with a good understanding what you are writing about. Academic papers are not like novels where you keep the reader in suspense. To be effective in getting others to read your paper, be as open and concise about your findings here as possible. Ideally, upon reading your abstract, the reader should feel he / she must read your paper in entirety.
+---
+
+<!-- First: Set your default preferences for chunk options: -->
+
+<!-- If you want a chunk's code to be printed, set echo = TRUE. message = FALSE stops R printing ugly package loading details in your final paper too. I also suggest setting warning = FALSE and checking for warnings in R, else you might find ugly warnings in your paper. -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
+# Note: Include = FALSE implies the code is executed, but not printed in your pdf.
+# warning and message = FALSE implies ugly messages and warnings are removed from your pdf.
+# These should be picked up when you execute the command chunks (code sections below) in your rmd, not printed in your paper!
+
+# Lets load in example data, and see how this can be stored and later called from your 'data' folder.
+if(!require("tidyverse")) install.packages("tidyverse")
+library(pacman)
+pacman::p_load(vars)
+
+Example_data <- Texevier::Ex_Dat
+
+# Notice that as you are working in a .Rproj file (I am assuming you are) - the relative paths of your directories start at your specified root.
+# This means that when working in a .Rproj file, you never need to use getwd() - it is assumed as your base root automatically.
+write_rds(Example_data, path = "data/Example_data.rds")
+
+```
+
+
+<!-- ############################## -->
+<!-- # Start Writing here: -->
+<!-- ############################## -->
+
+# Introduction \label{Introduction}
+
+# The Econometric Approach
+
+To replicate and test the robustness of the econometric methodology executed by @cologni2008 I adopt @johansen1992 methodology for modeling cointegration. Before outlining the steps of this approach, the three model representations that will facilitate the method is provided. Firstly the reduced-form vector auto-regression model (VAR) with $n$ time series and $p$ legs is represented by:
+\begin{align}
+\bm{Y}_t = \boldsymbol{\Phi} \bm{D}_t + \bm{\Pi}_1 \bm{Y}_{t-1} + ...+ \bm{\Phi}_p \bm{Y}_{t-p} + \bm{u}_t, \ \ \ t=1,...,T, \label{1}
+\end{align}
+and its corresponding vector error correction model (VECM) representation is specified as:
+\begin{align}
+\Delta \bm{Y}_t = \bm{\Phi} \bm{D}_t + \bm{\Pi} \bm{Y}_{t-1} + \bm{\Gamma}_1 + ... + \bm{\Gamma}_{p-1} \bm{\Delta} \bm{Y}_{t-p+1} + \bm{u}_t, \ \ \ t=1,...,T, \label{2}
+\end{align}
+where $\bm{Y}_t$ is a $(n \times 1)$ vector of time series , $\bm{D}_t$ contains the deterministic terms (constant, trend, seasonal dummies etc.)^[The exact specification of the deterministic terms will be the first step of @johansen1992's approach], and the $(n \times n)$ matrix $\bm{\Pi}$ represents the long-run impact matrix which has reduced rank $r<n$. Since $\bm{\Pi}$ has rank $r$ it can be decayed as the product $\bm{\Pi} = \bm{\alpha \beta'}$, where $\bm{\alpha}$ and $\bm{\beta}$ are $(n \times r)$ matrices with $rank(\bm{\alpha})=rank(\bm{\beta}) = r$, and $\bm{\beta'}$ contains the cointegrating vectors in its $r$ independent rows. $\bm{\Gamma}_i$, $i=1,...,p-1$ represents the short-run impact $(n \times n)$ matrices. The VAR parameters $\bm{\Pi}_i$ in (\ref{1}) can be recovered from the VECM parameters $\bm{\Pi}$ and $\bm{\Gamma}_k$ in the following fashion:
+\begin{align}
+\bm{\Pi}_1 = \bm{\Gamma}_1 + \bm{\Pi} + \bm{I}_n, \notag \\ \bm{\Gamma}_k = \bm{\Gamma}_k - \bm{\Gamma}_{k-1}, \ k=2,...,p. \notag
+\end{align}
+Finally, $\bm{u_t}$ is the $(n \times 1)$ white noise error vector that has a zero mean and a $(n \times n)$ invertible covariance matrix:
+\begin{align}
+E[\bm{u}_t \bm{u}_t'] = \sum_u. \label{3}
+\end{align}
+The following objective is to identify the structural shocks that dictates instructive responses by the system's $n$ variables. The corresponding structural-form specification for systems (\ref{1}) and (\ref{2}) is: 
+\begin{align}
+\bm{BY}_t = \bm{\Lambda}_0 \bm{D}_t + \bm{\Lambda}_1 \bm{Y}_{t-1} + ...+ \bm{\Lambda}_p \bm{Y}_{t-p} + \bm{\varepsilon}_t, \ \ \ t=1,...,T,  \label{4}
+\end{align}
+where $\bm{\varepsilon}_t$ is the $(n \times 1)$ structural innovations vector with zero mean, unit variances, and a $(n \times n)$ covariance matrix with $n$ non-zero elements:
+\begin{align}
+E[ \bm{\varepsilon}_t \bm{\varepsilon}_t'] = \sum_{\varepsilon}. \label{5}
+\end{align}
+The pre-multiplication of the primitive system (\ref{4}) by $\bm{B}^{-1}$ produces the reduced-form system (\ref{1}), noting that $\bm{\Phi} =\bm{B}^{-1} \bm{\Lambda}_0$,$\bm{\Pi}_1 =  \bm{B}^{-1} \bm{\Lambda}_0$,...,$\bm{\Pi}_p = \bm{B}^{-1} \bm{\Lambda}_p$  and, crucially, the relationship between the structural innovations $\varepsilon_t$ and the residual error vector $u_t$ is:
+\begin{align}
+\bm{u}_t = \bm{B}^{-1} \bm{\varepsilon}_t = \bm{A} \bm{\varepsilon}_t. \label{6}
+\end{align}
+Additionally, since the structural shocks are assumed to uncorrelated with unit variances ($\sum_{\varepsilon} = I_n$), (\ref{6}) can be used to get:
+\begin{align}
+\sum_u = E[\bm{u}_t \bm{u}_t'] = \bm{A} E[\bm{\varepsilon}_t \bm{\varepsilon}_t'] \bm{A'} =  \bm{A} \sum_{\varepsilon} \bm{A'} = \bm{AA'}. \label{7}
+\end{align}
+The exact identification of the structural system (\ref{4}) necessitates recovering the $n^2$ entries of $\bm{B}$, however, $\sum_u = \bm{AA'}$ only identifies $(n^2 +n)/2$ unique parameters. Therefore, as stated by @lutkepohl2005, an additional $(n^2 -n)/2$ restrictions are required for exact identification. 
+
+# Johansen's Methodology for Modeling Cointegration
+
+The method proposed by @johansen1992 is applied to replicate and test the robustness of the econometric methodology executed by @cologni2008. The steps are outlined as follows:
+\renewcommand{\labelenumii}{\arabic{enumi}.\arabic{enumii}}
+\renewcommand{\labelenumiii}{\arabic{enumi}.\arabic{enumii}.\arabic{enumiii}}
+\renewcommand{\labelenumiv}{\arabic{enumi}.\arabic{enumii}.\arabic{enumiii}.\arabic{enumiv}}
+
+\begin{enumerate}
+\item Select the specification of the deterministic component. Here the $\bm{\Phi}_t \bm{D}_t= \bm{\mu}_t = \bm{\mu}_0 + \bm{\mu}_1 t$ term contains all deterministic parts, i.e. constants and trends. 
+\item Pre-test the variables to conclude that they are (or may be) $I(1)$.
+\item Estimate the unrestricted VAR in levels and check the adequacy of the model specification.
+\item Impose the number of cointegrating relationships $r$ and execute normalization as necessary.
+\item Estimate the resulting (reduced-rank) cointegrated VECM, interpret the economic dynamics of the model, and test further hypothesized restrictions.
+\end{enumerate}
+
+
+   
+   
+<!-- Make title of bibliography here: -->
+<!-- \newpage -->
+
+\newpage
+
+# References {-}
+
+<div id="refs"></div>
+
+
+# Appendix {-}
+
+## Appendix A {-}
+
+Some appendix information here
+
+## Appendix B {-}
+
