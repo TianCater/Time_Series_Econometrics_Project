@@ -140,7 +140,7 @@ Johansen_trace <- ca.jo(VAR2, type="trace", K=2, ecdet=c("trend"), spec="longrun
 
 # test stat < CV where r <=2 : reject null of no cointegrating relationships
 
-Johansen_eig<- ca.jo(VAR2, type="eigen", K=2, ecdet=c("trend"), spec="longrun")
+Johansen_eig<- ca.jo(VAR2, type="eigen",ecdet=c("trend") , K=2, spec="longrun")
 
 # test stat > CV for r=0 and r <=1. Hence, indicative of 2 cointegrating relationships. Not the same as determined by @cologni2008
 
@@ -224,91 +224,105 @@ summary(Johansen_eig)
 ### 4.2. Esitmate the cointegrating relationships
 
 ``` r
-VECModelNew <- VECM(VAR2,lag=2,r=2, estim="ML", include=c("none"),LRinclude =c("both") )
-
-
-
-summary(VECModelNew)
+VECM_ur <- VECM(VAR2,lag=1,r=2, estim="ML", include=c("both"), LRinclude =c("both") )
 ```
 
-    ## #############
-    ## ###Model VECM 
-    ## #############
-    ## Full sample size: 96     End sample size: 93
-    ## Number of variables: 6   Number of estimated slope parameters 84
-    ## AIC -3899.698    BIC -3666.699   SSR 99.45873
-    ## Cointegrating vector (estimated by ML):
-    ##    realGDP_tr  oilprice_tr interestrate_tr inflation_tr exchangerate_tr
-    ## r1          1 8.673617e-19     -0.02157623     15.81735     0.007108329
-    ## r2          0 1.000000e+00      0.53085177   -154.53338    -0.075334494
-    ##    real_monetaryaggregate_tr      const        trend
-    ## r1                0.07161396  -9.064503 -0.009067186
-    ## r2                6.55223919 -23.748493  0.022375598
-    ## 
-    ## 
-    ##                                    ECT1                ECT2               
-    ## Equation realGDP_tr                -0.0472(0.0112)***  -0.0044(0.0014)**  
-    ## Equation oilprice_tr               0.1299(0.3109)      0.0156(0.0376)     
-    ## Equation interestrate_tr           9.0708(2.5279)***   -0.4180(0.3055)    
-    ## Equation inflation_tr              0.0097(0.0078)      0.0023(0.0009)*    
-    ## Equation exchangerate_tr           -0.0281(0.0718)     -0.0098(0.0087)    
-    ## Equation real_monetaryaggregate_tr -0.0630(0.0198)**   -0.0099(0.0024)*** 
-    ##                                    realGDP_tr -1       oilprice_tr -1     
-    ## Equation realGDP_tr                0.2514(0.0972)*     -0.0061(0.0047)    
-    ## Equation oilprice_tr               3.6412(2.7014)      0.2547(0.1314).    
-    ## Equation interestrate_tr           67.5315(21.9660)**  0.9112(1.0681)     
-    ## Equation inflation_tr              0.0993(0.0677)      0.0077(0.0033)*    
-    ## Equation exchangerate_tr           -0.8592(0.6243)     -0.0090(0.0304)    
-    ## Equation real_monetaryaggregate_tr -0.3868(0.1717)*    -0.0156(0.0083).   
-    ##                                    interestrate_tr -1  inflation_tr -1      
-    ## Equation realGDP_tr                0.0025(0.0006)***   0.0355(0.2124)       
-    ## Equation oilprice_tr               0.0094(0.0175)      -10.9325(5.9008).    
-    ## Equation interestrate_tr           -0.1723(0.1419)     -165.7891(47.9816)***
-    ## Equation inflation_tr              0.0004(0.0004)      -0.5781(0.1479)***   
-    ## Equation exchangerate_tr           0.0036(0.0040)      1.7926(1.3637)       
-    ## Equation real_monetaryaggregate_tr -0.0012(0.0011)     0.2904(0.3750)       
-    ##                                    exchangerate_tr -1 
-    ## Equation realGDP_tr                0.0162(0.0175)     
-    ## Equation oilprice_tr               -0.8826(0.4864).   
-    ## Equation interestrate_tr           1.6099(3.9549)     
-    ## Equation inflation_tr              -0.0138(0.0122)    
-    ## Equation exchangerate_tr           0.4598(0.1124)***  
-    ## Equation real_monetaryaggregate_tr 0.0221(0.0309)     
-    ##                                    real_monetaryaggregate_tr -1
-    ## Equation realGDP_tr                -0.0665(0.0653)             
-    ## Equation oilprice_tr               -2.9863(1.8128)             
-    ## Equation interestrate_tr           -6.7323(14.7403)            
-    ## Equation inflation_tr              0.0320(0.0454)              
-    ## Equation exchangerate_tr           -0.1821(0.4189)             
-    ## Equation real_monetaryaggregate_tr 0.4223(0.1152)***           
-    ##                                    realGDP_tr -2        oilprice_tr -2     
-    ## Equation realGDP_tr                0.2408(0.0813)**     0.0099(0.0045)*    
-    ## Equation oilprice_tr               -1.8341(2.2586)      -0.3019(0.1258)*   
-    ## Equation interestrate_tr           15.8871(18.3658)     -1.1646(1.0232)    
-    ## Equation inflation_tr              -0.0354(0.0566)      -0.0056(0.0032).   
-    ## Equation exchangerate_tr           0.8107(0.5220)       -0.0185(0.0291)    
-    ## Equation real_monetaryaggregate_tr -0.1210(0.1435)      -0.0024(0.0080)    
-    ##                                    interestrate_tr -2  inflation_tr -2      
-    ## Equation realGDP_tr                -0.0009(0.0006)     -0.2119(0.1722)      
-    ## Equation oilprice_tr               -0.0055(0.0165)     1.5462(4.7827)       
-    ## Equation interestrate_tr           -0.2742(0.1341)*    -25.2883(38.8901)    
-    ## Equation inflation_tr              -0.0004(0.0004)     -0.1895(0.1199)      
-    ## Equation exchangerate_tr           -0.0004(0.0038)     1.0043(1.1053)       
-    ## Equation real_monetaryaggregate_tr 0.0015(0.0010)      0.3956(0.3039)       
-    ##                                    exchangerate_tr -2 
-    ## Equation realGDP_tr                0.0086(0.0181)     
-    ## Equation oilprice_tr               0.1789(0.5029)     
-    ## Equation interestrate_tr           0.7781(4.0894)     
-    ## Equation inflation_tr              0.0060(0.0126)     
-    ## Equation exchangerate_tr           -0.0418(0.1162)    
-    ## Equation real_monetaryaggregate_tr 0.0236(0.0320)     
-    ##                                    real_monetaryaggregate_tr -2
-    ## Equation realGDP_tr                0.0232(0.0619)              
-    ## Equation oilprice_tr               2.4215(1.7189)              
-    ## Equation interestrate_tr           -9.6564(13.9770)            
-    ## Equation inflation_tr              0.0714(0.0431)              
-    ## Equation exchangerate_tr           -0.2954(0.3973)             
-    ## Equation real_monetaryaggregate_tr 0.0375(0.1092)
+    ## Warning in lineVar(data, lag, r = r, include = include, model = "VECM", : When `LRinclude` is either 'const' or 'both', `include` can only be `none`.
+    ##   Setting include='none'.
+
+``` r
+#extract coefficients for Beta and Pi matrix:
+
+coefB(VECM_ur) #remember includes both a unrestricted constant and trend
+```
+
+    ##                                      r1            r2
+    ## realGDP_tr                 1.000000e+00  0.000000e+00
+    ## oilprice_tr                1.387779e-17  1.000000e+00
+    ## interestrate_tr            1.983110e-02  3.235978e-01
+    ## inflation_tr               1.699974e+01 -1.284437e+02
+    ## exchangerate_tr           -7.324008e-02  1.887561e-01
+    ## real_monetaryaggregate_tr  5.401991e-01  4.237294e+00
+    ## const                     -1.052255e+01 -1.663290e+01
+    ## trend                     -5.535934e-03  7.855959e-03
+
+``` r
+coefPI(VECM_ur) #remember includes both a unrestricted constant and trend
+```
+
+    ##                                      realGDP_tr   oilprice_tr interestrate_tr
+    ## Equation realGDP_tr                -0.040870686 -0.0046025621    -0.002299890
+    ## Equation oilprice_tr                0.104000928  0.0009174512     0.002359338
+    ## Equation interestrate_tr            1.724006581 -1.2479143120    -0.369633338
+    ## Equation inflation_tr               0.004034173  0.0028148491     0.000990881
+    ## Equation exchangerate_tr           -0.023437792 -0.0111754492    -0.004081148
+    ## Equation real_monetaryaggregate_tr -0.025101148 -0.0071640335    -0.002816049
+    ##                                    inflation_tr exchangerate_tr
+    ## Equation realGDP_tr                  -0.1036210    0.0021246104
+    ## Equation oilprice_tr                  1.6501478   -0.0074438612
+    ## Equation interestrate_tr            189.5943489   -0.3618178381
+    ## Equation inflation_tr                -0.2929697    0.0002358569
+    ## Equation exchangerate_tr              1.0369793   -0.0003928488
+    ## Equation real_monetaryaggregate_tr    0.4934618    0.0004861548
+    ##                                    real_monetaryaggregate_tr       const
+    ## Equation realGDP_tr                              -0.04158072  0.50661791
+    ## Equation oilprice_tr                              0.06006872 -1.10961517
+    ## Equation interestrate_tr                         -4.35647260  2.61547860
+    ## Equation inflation_tr                             0.01410660 -0.08926889
+    ## Equation exchangerate_tr                         -0.06001474  0.43250551
+    ## Equation real_monetaryaggregate_tr               -0.04391573  0.38328679
+    ##                                            trend
+    ## Equation realGDP_tr                 1.900999e-04
+    ## Equation oilprice_tr               -5.685348e-04
+    ## Equation interestrate_tr           -1.934755e-02
+    ## Equation inflation_tr              -2.195759e-07
+    ## Equation exchangerate_tr            4.195620e-05
+    ## Equation real_monetaryaggregate_tr  8.267794e-05
+
+``` r
+#The Beta-restricted VECM:
+
+beta_VECM_ur <- coefB(VECM_ur) 
+beta_VECM_restr <- head(beta_VECM_ur,6)
+VECM_r <- VECM(VAR2,lag=1,r=2, estim="ML", beta = beta_VECM_restr)
+round(coefB(VECM_r),5)
+```
+
+    ##                                 r1         r2
+    ## realGDP_tr                 1.00000    0.00000
+    ## oilprice_tr                0.00000    1.00000
+    ## interestrate_tr            0.01983    0.32360
+    ## inflation_tr              16.99974 -128.44367
+    ## exchangerate_tr           -0.07324    0.18876
+    ## real_monetaryaggregate_tr  0.54020    4.23729
+
+``` r
+#check long coint values
+   all.equal(VECM(VAR2, lag=1, estim="ML", r=2,include=c("none"),LRinclude =c("both"))$model.specific$beta, 
+             cajorls(ca.jo(VAR2, K=2, spec="transitory"), r=2)  $beta, check.attributes=FALSE)
+```
+
+    ## [1] "Numeric: lengths (16, 12) differ"
+
+``` r
+# check OLS parameters
+  all.equal(t(coefficients(VECM(VAR2, lag=1, estim="ML", r=2,include=c("none"),LRinclude =c("both")))), 
+    coefficients(cajorls(ca.jo(VAR2, K=2, spec="transitory",), r=2)$rlm), check.attributes=FALSE)
+```
+
+    ## [1] "Numeric: lengths (48, 54) differ"
+
+``` r
+ HH <-  matrix(byrow = TRUE, c(1, 0, 0, 0, 0, 0 ,1, 0, 0, 0, 0, 0,1,0, 0, 0, 0, 0 ,1,0, 0, 0, 0, 0 ,1,0, 0, 0, 0, 0), 6, 5)
+
+ H1 <-  matrix(byrow = TRUE, c(1, 0, 0, 0, 0, 1, 0, 0, 0, 0,1,0, 0, 0, 0,1, 0, 0, 0, 0 ,0,0, 0, 0,0,0,0,1), 7, 4)
+
+ #blr <-  blrtest(Johansen_eig, H=H, r=2)
+    #summary(blr)
+    
+    
+#VECM_r <- VECM(VAR2,lag=1,r=2, estim="ML", beta = blr@V[,1:2])
+```
 
 ### 4.3. Construct the (6x6) long-run impact matrix *Π* and specify the restricted B matrix
 
@@ -371,22 +385,16 @@ Sigma_u_matrix
     ## [6,] -0.0009050643
 
 ``` r
-coeffs <- summary(VECModelNew)$coefMat
+#coeffs <- summary(VECModelNew)$coefMat
 
-ect_coeffs <- coeffs[grep("ECT", rownames(coeffs)),]
+#ect_coeffs <- coeffs[grep("ECT", rownames(coeffs)),]
 
 #now we have a matrix of all of the ECT and variables
 
 
 #need covariance of ecm terms in matrix 
-cov(ect_coeffs)
+#cov(ect_coeffs)
 ```
-
-    ##             Estimate  Std. Error   t value    Pr(>|t|)
-    ## Estimate    6.931416  1.85974271 3.6866579 -0.17793701
-    ## Std. Error  1.859743  0.51607620 1.0251883 -0.03700606
-    ## t value     3.686658  1.02518834 6.5489288  0.20260518
-    ## Pr(>|t|)   -0.177937 -0.03700606 0.2026052  0.08479717
 
 ``` r
 #blrtest(z =Johansen_eig_2 , H = , r = 2)
@@ -437,31 +445,31 @@ ER_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "exchangerate_tr"
 M <- plot(M_IRF)
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-28-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-29-1.png)
 
 ``` r
 I <- plot(IR_IRF)
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-28-2.png)
+![](README_files/figure-markdown_github/unnamed-chunk-29-2.png)
 
 ``` r
 G <- plot(GDP_IRF)
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-28-3.png)
+![](README_files/figure-markdown_github/unnamed-chunk-29-3.png)
 
 ``` r
 In <- plot (I_IRF)
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-28-4.png)
+![](README_files/figure-markdown_github/unnamed-chunk-29-4.png)
 
 ``` r
 E <- plot(ER_IRF)
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-28-5.png)
+![](README_files/figure-markdown_github/unnamed-chunk-29-5.png)
 
 ``` r
 #plotIRFGrid(irf, eb, indexes, type, bands)

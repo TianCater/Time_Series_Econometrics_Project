@@ -172,13 +172,16 @@ D_inflation_tr <- diff(inflation_tr)
 
 df1_tidy <- df1 |> dplyr::select(date,FFR, lCPI, lGDP, lM1, lExchange, lOil, infl, realM1) |> pivot_longer(cols = c(FFR, lCPI, lGDP, lM1, lExchange, lOil, infl,realM1), names_to = "Variable", values_to = "Value") |> arrange(date)
 
+
+Variable_labels <- c("FFR"="Interest Rate","infl"="Inflation","lCPI"= "CPI","lExchange"= "Exchange Rate","lGDP" ="Real GDP","lM1"= "Money Aggregate","lOil"= "Oil Price","realM1"= "Real Money Aggregate")
+
 gggg <- df1_tidy |> ggplot() +
     geom_line(aes(x = date, y = Value), alpha = 0.8, 
     size = 0.5) + 
     theme_bw() + theme(legend.position = "none") + labs(x = "", 
-    y = "Prices", title = "TRI of Brics Countries", subtitle = "Total Return Index using net dividends reinvested", 
+    y = "", title = "TRI of Brics Countries", subtitle = "Total Return Index using net dividends reinvested", 
     caption = "Note:\nBloomberg data used") +
-    facet_wrap(~Variable, scales = "free_y") 
+    facet_wrap(~Variable, scales = "free_y",labeller = labeller(category=Variable_labels)) 
     
 gggg
 
@@ -194,9 +197,11 @@ adf_interestrate_tr <- ur.df(interestrate_tr, type = "trend", selectlags = c("AI
 adf_price_tr <- ur.df(price_tr, type = "trend", selectlags = c("AIC")) #fail to reject null of no unit root
 adf_realGDP_tr <- ur.df(realGDP_tr, type = "trend", selectlags = c("AIC")) # fail ...
 adf_oilprice_tr <- ur.df(oilprice_tr, type = "trend", selectlags = c("AIC")) #
-adf_interestrate_tr <- ur.df(interestrate_tr, type = "trend", selectlags = c("AIC"))
+adf_exchangerate_tr <- ur.df(interestrate_tr, type = "trend", selectlags = c("AIC"))
 adf_monetaryaggregate_tr  <- ur.df(monetaryaggregate_tr, type = "trend", selectlags = c("AIC"))
 
+
+summary(adf_interestrate_tr)
 
 ```
 
@@ -233,6 +238,7 @@ colnames(VAR1) <- cbind("RealMonetaryAggregate", "InterestRate", "RealGDP", "Inf
 
 
 VAR2 <- cbind(realGDP_tr, oilprice_tr, interestrate_tr, inflation_tr,exchangerate_tr ,real_monetaryaggregate_tr)
+
 #In a similar order to the cointegration analysis of the restricted system
 ```
 
@@ -274,20 +280,29 @@ roots_stability <- roots(VAR_unrestricted) ##Shows eigenvalues corresponding to 
  varUR.norm <- normality.test(VAR_unrestricted, multivariate.only = F) ## Evidence of non-normal errors. Look individually
 
  
- #plot(varUR.serial)
+ plot(varUR.serial)
+
+```
+
+
+
+
+```{r}
 
 reccusum_test <- stability(VAR_unrestricted,type = "Rec-CUSUM") #In time series analysis, the CUSUM statistics use the sequence of residual deviations from a model to indicate whether the autoregressive model is misspecified.
 
  plot(reccusum_test)
 
+```
+
+
+```{r}
 
 fluctuation_test <- stability(VAR_unrestricted,type = "fluctuation") ## Test for unstable parameter fluctuations. Both these
 
  plot(fluctuation_test)
 
-
 ```
-
 
 
 ## 4.Impose the number of cointegrating relationships $r$ and execute normalization as necessary.
@@ -295,13 +310,13 @@ fluctuation_test <- stability(VAR_unrestricted,type = "fluctuation") ## Test for
 ### 4.1. Determine the number of cointegrating relationships
 
 ```{r}
-Johansen_trace <- ca.jo(VAR2, type="trace", K=2, ecdet=c("trend"), spec="longrun")
+Johansen_trace <- ca.jo(VAR2, type="trace", ecdet = c("trend") ,K=3, spec="transitory")
 
 # test stat < CV where r <=2 : reject null of no cointegrating relationships
 
-Johansen_eig<- ca.jo(VAR2, type="eigen", K=2, ecdet=c("trend"), spec="longrun")
+Johansen_eig<- ca.jo(VAR2, type="eigen" ,ecdet = c("trend") ,K=3,spec="transitory")
 
-# test stat > CV for r=0 and r <=1. Hence, indicative of 2 cointegrating relationships. Not the same as determined by @cologni2008
+# test stat > CV for r=0 and r <=1. Hence, indicative of 1 cointegrating relationships. As done in the paper
 
 summary(Johansen_eig)
 
@@ -311,76 +326,122 @@ summary(Johansen_eig)
 
 
 ```{r}
-VECModelNew <- VECM(VAR2,lag=2,r=2, estim="ML", include=c("none"),LRinclude =c("both") )
+VECM_ur <- VECM(VAR2,lag=2,r=1, estim="ML",  LRinclude =c("both") )
+summary(VECM_ur)
+#extract coefficients for Beta and Pi matrix:
+
+coefB(VECM_ur) #remember includes a restricted trend
+coefPI(VECM_ur) 
+
+#The Beta-restricted VECM:
+
+beta_VECM_ur <- coefB(VECM_ur) 
+beta_VECM_restr <- head(beta_VECM_ur,6)
+beta_VECM_restr[3,1] <- 0
+beta_VECM_restr[6,1] <- 0
+
+VECM_r <- VECM(VAR2,lag=2,r=1, estim="ML",beta = beta_VECM_restr)
+round(coefB(VECM_r),5)
+
+summary(VECM_r)
 
 
+#check long coint values
+   all.equal(VECM(VAR2, lag=1, estim="ML", r=1,include=c("none"),LRinclude =c("both"))$model.specific$beta, 
+             cajorls(ca.jo(VAR2, K=2, spec="transitory", ecdet = "trend"), r=1)  $beta, check.attributes=FALSE)
 
-summary(VECModelNew)
 
 
 
 ```
 
-### 4.3. Construct the (6x6) long-run impact matrix $\Pi$ and specify the restricted B matrix
+
+```{r}
+
+ HH <-  matrix(byrow = TRUE, c(1, 0, 0, 0, 0, 0 ,0,1, 0, 0, 0, 0, 0,0,1,0, 0, 0, 0, 0 ,0,1,0, 0, 0, 0, 0 ,0,1,0, 0, 0, 0, 0,0,0,0,0,0,0,0,1), 7, 6)
+
+HH1 <-matrix(byrow = TRUE, c(1,  0, 0, 0, 0,0 ,1,0, 0, 0, 0, 0,1,0,0, 0, 0, 0, 1,0,0, 0, 0, 0, 1,0, 0, 0, 0, 0), 6, 5)
+
+ H1 <-  matrix(byrow = TRUE, c(1, 0, 0, 0, 0, 0,1, 0, 0, 0, 0,0,0,0,0,0,0,1,0, 0, 0, 0,0,1, 0, 0, 0, 0,0,0,0,0,0,0,1), 7, 5)
+ 
+ H2 <- matrix(byrow = TRUE, c(1, 0, 0, 0,0,1, 0, 0,  0,0,0,0,0,0,1,0,0,0, 0,1,0, 0, 0,0), 6, 4)
+
+ blr <-  blrtest(Johansen_eig, H=HH, r=1)
+    summary(blr)
+    
+    
+VECM_r1 <- VECM(VAR2,lag=2,r=1, estim="ML" ,beta = blr@V[,1])
+summary(VECM_r1)
+
+VECM_r1$model.specific$beta
+
+
+```
 
 
 
 ```{r}
 
-Johansen_trace_2 <- ca.jo(VAR1, type="trace", K=2, ecdet=c("trend"), spec="longrun")
-Johansen_eig_2<- ca.jo(VAR1, type="eigen", K=2, ecdet =c("trend"), spec="longrun")
+ vecm.r1 <- cajorls(Johansen_trace, r = 1)
+summary(vecm.r1)
 
-beta_transpose <- Johansen_eig_2@V #cointegrating vectors
-alpha <- Johansen_eig_2@W #cointegrating loadingcoeffs
+```
 
-#Purge the time trend and labels to form a (6X6) matrix
-beta_transpose1 <- beta_transpose[-7,-7]
-alpha1 <- alpha[-7,-7]
+```{r}
 
-colnames(beta_transpose1)<-NULL
-rownames(beta_transpose1) <- NULL
 
-colnames(alpha1)<-NULL
-rownames(alpha1) <- NULL
-
-# The matrix of interest is (Pi) = alpha * beta'
-
-Pi <- t(beta_transpose1)*alpha1
-
-# Construct B matrix to impose the set of over-identifying restrictions on its coefficients as done by @Cologni2008
-
-Br1 <- c(1,1,0,1,0,0)
-Br2 <- c(0,1,1,1,1,1)
-Br3 <- c(0,0,1,1,1,1)   # order:m, r, y, p, e, o
-Br4 <- c(0,0,0,1,1,1)
-Br5 <- c(0,0,0,0,1,1)
-Br6 <- c(0,0,0,0,0,1)
+LR <- matrix(NA, nrow = 6, ncol = 6)
+LR[,3] <- 1
+#LR[2:6,1] <- 0
 
 
 
-B <- rbind(Br1, Br2, Br3, Br4, Br5, Br6)
 
-colnames(B)<-NULL
-rownames(B) <- NULL
+SR <- matrix(NA, nrow = 6, ncol = 6)
+SR[1, 3] <- 0
+SR[1, 5:6] <- 0
+SR[2, 1] <- 0
+SR[3, 1:2] <- 0
+SR[4, 1:3] <- 0
+SR[5, 1:4] <- 0
+SR[6, 1:5] <- 0
 
-#In order to identify the covariance matrix, I impose the restricted B matrix onto long-run impact matrix $\Pi$ 
 
-Sigma_u_matrix <- Pi*B
-Sigma_u_matrix
+SVECM_r <- SVEC(ca.jo(VAR1, type="trace", ecdet = "trend" ,K=3, spec="longrun"),LR = LR ,SR= SR, r=1, lrtest = T, boot = T)
+summary(SVECM_r)
+
+print(SVECM_r$Restrictions)
+
+```
+
+
+
+
+
+## 5. Estimate the resulting (reduced-rank) cointegrated VECM, interpret the economic dynamics of the model, and test further hypothesized restrictions.
+
+
+```{r}
+
 
 
 ```
 
-```{r,}
-coeffs <- summary(VECModelNew)$coefMat
 
-ect_coeffs <- coeffs[grep("ECT", rownames(coeffs)),]
+
+
+
+
+```{r,}
+#coeffs <- summary(VECModelNew)$coefMat
+
+#ect_coeffs <- coeffs[grep("ECT", rownames(coeffs)),]
 
 #now we have a matrix of all of the ECT and variables
 
 
 #need covariance of ecm terms in matrix 
-cov(ect_coeffs)
+#cov(ect_coeffs)
 ```
 
 
@@ -394,36 +455,13 @@ cov(ect_coeffs)
 
 
 
-```{r}
-VARModelRestricted <- VAR(VAR1, p=2, type = "trend", lag.max = 4)
-
-covariancematrix <- summary(VARModelRestricted)$covres
-
-```
-
-
-
 
 
 ```{r}
-
-
-
-VECM_levels <- vec2var(Johansen_eig, r=1)
-
-VECM <- cajorls(Johansen_eig, r = 1)
-
-
-
-```
-
-
-
-```{r}
- vecm.fevd <- fevd(VECM_levels) #forecast error variance decomposition
- vecm.norm <- normality.test(VECM_levels)
- vecm.arch <- arch.test(VECM_levels)
- vecm.serial <- serial.test(VECM_levels)
+ vecm.fevd <- fevd(SVECM_r) #forecast error variance decomposition
+ vecm.norm <- normality.test(SVECM_r)
+ vecm.arch <- arch.test(SVECM_r)
+ vecm.serial <- serial.test(SVECM_r)
  
 ```
 
@@ -432,32 +470,18 @@ VECM <- cajorls(Johansen_eig, r = 1)
 
 
 
-
 ```{r}
-#covariancematrix*B_Matrix*t(B_Matrix)
-```
+M_IRF <- irf(SVECM_r, impulse = "OilPrice", response = "RealMonetaryAggregate",
+             n.ahead = 16, boot=T, runs = 100)
 
-We then obtain a single entry for each row, which we can create our short-run error vector from.
-
-```{r}
-ErrorVector_U <- c(0.0001328802, 0.07138726, 2.804883e-05, 0.753182, 0.01135468,  0.02108534)
-```
-
-
-
-
-
-```{r}
-M_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "real_monetaryaggregate_tr",
-             n.ahead = 16, ortho = FALSE, runs = 1000)
-IR_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "interestrate_tr",
-             n.ahead = 16, ortho = FALSE, runs = 1000)
-GDP_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "realGDP_tr",
-             n.ahead = 16, ortho = FALSE, runs = 1000)
-I_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "inflation_tr",
-             n.ahead = 16, ortho = FALSE, runs = 1000)
-ER_IRF <- irf(VECM_levels, impulse = "oilprice_tr", response = "exchangerate_tr",
-             n.ahead = 16, ortho = FALSE, runs = 1000)
+IR_IRF <- irf(SVECM_r, impulse = "OilPrice", response = "InterestRate",
+             n.ahead = 16, boot=T, runs = 100)
+GDP_IRF <- irf(SVECM_r, impulse = "OilPrice", response = "RealGDP",
+             n.ahead = 16, boot=T, runs = 100)
+I_IRF <- irf(SVECM_r, impulse = "OilPrice", response = "Inflation",
+             n.ahead = 16, boot=T, runs = 100)
+ER_IRF <- irf(SVECM_r, impulse = "OilPrice", response = "ExchangeRate",
+             n.ahead = 16, boot=T, runs = 100)
 
 M <- plot(M_IRF)
 I <- plot(IR_IRF)
