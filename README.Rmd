@@ -230,6 +230,8 @@ D_adf_inflation_tr <- ur.df(D_inflation_tr,selectlags = c("AIC")) #reject the nu
 
 ## 3. Estimate the unrestricted VAR in levels and check the adequacy of the model specification.
 
+The order of lags of the unrestricted VAR(p) is selected based on the AIC criteria reported in table \ref{}
+
 
 ```{r}
 VAR1 <- cbind(real_monetaryaggregate_tr, interestrate_tr, realGDP_tr, inflation_tr, exchangerate_tr, oilprice_tr)
@@ -314,7 +316,7 @@ Johansen_trace <- ca.jo(VAR2, type="trace", ecdet = c("trend") ,K=3, spec="trans
 
 # test stat < CV where r <=2 : reject null of no cointegrating relationships
 
-Johansen_eig<- ca.jo(VAR2, type="eigen" ,ecdet = c("trend") ,K=3,spec="transitory")
+Johansen_eig<- ca.jo(VAR2, type="eigen" ,K=3,spec="transitory")
 
 # test stat > CV for r=0 and r <=1. Hence, indicative of 1 cointegrating relationships. As done in the paper
 
@@ -326,7 +328,7 @@ summary(Johansen_eig)
 
 
 ```{r}
-VECM_ur <- VECM(VAR2,lag=2,r=1, estim="ML",  LRinclude =c("both") )
+VECM_ur <- VECM(VAR2,lag=2,r=1, estim="ML",  LRinclude =c("trend") )
 summary(VECM_ur)
 #extract coefficients for Beta and Pi matrix:
 
@@ -346,6 +348,9 @@ round(coefB(VECM_r),5)
 summary(VECM_r)
 
 
+toLatex(summary(VECM_r), parenthese="Pvalue")
+options("show.signif.stars"=TRUE)
+
 #check long coint values
    all.equal(VECM(VAR2, lag=1, estim="ML", r=1,include=c("none"),LRinclude =c("both"))$model.specific$beta, 
              cajorls(ca.jo(VAR2, K=2, spec="transitory", ecdet = "trend"), r=1)  $beta, check.attributes=FALSE)
@@ -364,9 +369,9 @@ HH1 <-matrix(byrow = TRUE, c(1,  0, 0, 0, 0,0 ,1,0, 0, 0, 0, 0,1,0,0, 0, 0, 0, 1
 
  H1 <-  matrix(byrow = TRUE, c(1, 0, 0, 0, 0, 0,1, 0, 0, 0, 0,0,0,0,0,0,0,1,0, 0, 0, 0,0,1, 0, 0, 0, 0,0,0,0,0,0,0,1), 7, 5)
  
- H2 <- matrix(byrow = TRUE, c(1, 0, 0, 0,0,1, 0, 0,  0,0,0,0,0,0,1,0,0,0, 0,1,0, 0, 0,0), 6, 4)
+ H2 <- matrix(byrow = TRUE, c(1, 0, 0, 0,0,1, 0, 0,  0,0,1,0,0,0,0,1,0,0, 0,0,0, 0, 0,0), 6, 4)
 
- blr <-  blrtest(Johansen_eig, H=HH, r=1)
+ blr <-  blrtest(Johansen_eig, H=H2, r=1)
     summary(blr)
     
     
@@ -391,8 +396,7 @@ summary(vecm.r1)
 
 
 LR <- matrix(NA, nrow = 6, ncol = 6)
-LR[,3] <- 1
-#LR[2:6,1] <- 0
+
 
 
 
@@ -407,7 +411,7 @@ SR[5, 1:4] <- 0
 SR[6, 1:5] <- 0
 
 
-SVECM_r <- SVEC(ca.jo(VAR1, type="trace", ecdet = "trend" ,K=3, spec="longrun"),LR = LR ,SR= SR, r=1, lrtest = T, boot = T)
+SVECM_r <- SVEC(ca.jo(VAR1, type="trace", ecdet = "trend" ,K=4, spec="longrun"),LR = LR ,SR= SR, r=1, lrtest = T, boot = T)
 summary(SVECM_r)
 
 print(SVECM_r$Restrictions)
@@ -483,13 +487,16 @@ I_IRF <- irf(SVECM_r, impulse = "OilPrice", response = "Inflation",
 ER_IRF <- irf(SVECM_r, impulse = "OilPrice", response = "ExchangeRate",
              n.ahead = 16, boot=T, runs = 100)
 
+IRF <- irf(SVECM_r, impulse = "OilPrice",
+             n.ahead = 16, boot=T, runs = 100, )
+
 M <- plot(M_IRF)
 I <- plot(IR_IRF)
 G <- plot(GDP_IRF)
 In <- plot (I_IRF)
 E <- plot(ER_IRF)
 
-
+plot(IRF)
 #plotIRFGrid(irf, eb, indexes, type, bands)
 
 #grid.arrange(M, I, G, In, E)
